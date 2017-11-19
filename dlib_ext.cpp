@@ -13,7 +13,7 @@ using namespace std;
 using namespace dlib;
 
 
-char * Buffer[10000] = {
+char Buffer[10000] = {
     '\0'
 };
 
@@ -108,7 +108,7 @@ char * load(){
 }
 
 char * reload(){
-    Json::Value ret;
+    Json::Value result;
     try{
         Instance.pAligner = new dlib::shape_predictor();
         deserialize(Instance.alignerModelPath) >> *Instance.pAligner;
@@ -132,7 +132,7 @@ char * reload(){
     return charpizeJsonValue(result);
 }
 
-char * load(){
+char * reload(){
     Json::Value ret;
     try{
         delete Instance.pAligner;
@@ -190,13 +190,13 @@ alignAndEncode(char * data, int x, int y){
     faces.push_back(move(face_chip));
     
     //extract face features via resNet
-    std::vector<matrix<float,0,1>> facecodes = (*pFaceEncoder)(faces);
+    std::vector<matrix<float,0,1>> facecodes = (*Instance.pEncoder)(faces);
     int cvi = 0;
     for(float vi : facecodes[0]){
         facevector[cvi++] = vi;
     }
     result["facevector"] = facevector;
     
-    std::string result = result.toStyledString();
+    string result = result.toStyledString();
     return charpizeJsonValue(result);
 }
