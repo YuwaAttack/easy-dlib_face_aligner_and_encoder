@@ -1,0 +1,6 @@
+/Users/lando/Desktop/alphaface2.0/python-exts/dlib/build/CMakeFiles/rebuild_cache.dir
+/Users/lando/Desktop/alphaface2.0/python-exts/dlib/build/CMakeFiles/edit_cache.dir
+/Users/lando/Desktop/alphaface2.0/python-exts/dlib/build/CMakeFiles/dlib_ext.dir
+/Users/lando/Desktop/alphaface2.0/python-exts/dlib/build/dlib_build/CMakeFiles/rebuild_cache.dir
+/Users/lando/Desktop/alphaface2.0/python-exts/dlib/build/dlib_build/CMakeFiles/edit_cache.dir
+/Users/lando/Desktop/alphaface2.0/python-exts/dlib/build/dlib_build/CMakeFiles/dlib.dir
