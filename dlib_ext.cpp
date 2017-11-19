@@ -7,26 +7,10 @@
 #include "../dlib/dlib/image_processing.h"
 
 #include "json/json.h"
+#include <string.h>
 
 using namespace std;
 using namespace dlib;
-
-dlib::shape_predictor * pLandmarkPredictor = NULL;
-anet_type * pFaceEncoder = NULL;
-
-int 
-LoadLandmarkPredictor(const char * modelpath){
-    pLandmarkPredictor = new dlib::shape_predictor();
-    deserialize(modelpath) >> *pLandmarkPredictor;
-    return 0;
-}
-
-int 
-LoadFaceEncoder(const char * modelpath){
-    pFaceEncoder = new anet_type(); // 这里可以用作加载器
-    deserialize(modelpath) >> *pFaceEncoder; // 不知道内部构造就不知道出错咋办
-    return 0;
-}
 
 // 自定义转换函数
 void
@@ -40,21 +24,149 @@ _convert_img_from_ctypes_(matrix<rgb_pixel> &dst, char * data, int x, int y){
     return;
 }
 
-char *
-LandmarkAndEncode(char * data, int x, int y){
-    if(!pFaceEncoder || !pLandmarkPredictor){
-        return NULL;
+
+
+class DlibAlignerEncoder{
+    public:
+        char alignerModelPath[1000] = {'\0'};
+        char encoderModelPath[1000] = {'\0'};
+        dlib::shape_predictor * pAligner = NULL;
+        anet_type * pEncoder = NULL;
+          
+};
+
+DlibAlignerEncoder Instance;
+
+char * charpizeJsonValue(Json::Value& V){
+    const string& result = V.toStyledString();
+    // shared_ptr<char> ret = make_shared<char>(new char[result.size()]);
+    strcpy(Buffer, result.data());
+    return Buffer;
+}
+
+char * setParameters(char* jsonstrParams){
+    Json::Value ret;
+    Json::Reader reader;
+    Json::Value parameters;
+    
+    if (!reader.parse(jsonParameters, parameters, false))
+    {
+        result["code"] = 4;
+        result["message"] = "Cannot parse json!";
+        return charpizeJsonValue(result);
     }
+    
+    string alignerModelPath;
+    string encoderModelPath;
+    try{
+        alignerModelPath = parameters["alignerModelPath"].asString();
+        strcpy(Instance.alignerModelPath, alignerModelPath.c_str());
+    }catch(...){
+        result["code"] = 4;
+        result["message"] = "Missing parameter [alignerModelPath]";
+        return charpizeJsonValue(result);
+    }
+
+    try{
+        encoderModelPath = parameters["encoderModelPath"].asString();
+        strcpy(Instance.encoderModelPath, encoderModelPath.c_str());
+    }catch(...){
+        result["code"] = 4;
+        result["message"] = "Missing parameter [encoderModelPath]";
+        return charpizeJsonValue(result);
+    }
+
+    result["code"] = 0;
+    result["message"] = "Ok";
+    return charpizeJsonValue(result);
+}
+
+char * load(){
+    Json::Value ret;
+    try{
+        Instance.pAligner = new dlib::shape_predictor();
+    }catch(...){
+        result["code"] = 4;
+        result["message"] = "Cannot load aligner";
+        return charpizeJsonValue(result);
+    }
+    
+    try{
+        Instance.pEncoder = new anet_type();
+    }catch(...){
+        result["code"] = 4;
+        result["message"] = "Cannot load encoder";
+        return charpizeJsonValue(result);
+    }
+
+    result["code"] = 0;
+    result["message"] = "Ok";
+    return charpizeJsonValue(result);
+}
+
+char * load(){
+    Json::Value ret;
+    try{
+        Instance.pAligner = new dlib::shape_predictor();
+        deserialize(Instance.alignerModelPath) >> *Instance.pAligner;
+    }catch(...){
+        result["code"] = 4;
+        result["message"] = "Cannot load aligner";
+        return charpizeJsonValue(result);
+    }
+    
+    try{
+        Instance.pEncoder = new anet_type();
+        deserialize(Instance.encoderModelPath) >> *Instance.pEncoder;        
+    }catch(...){
+        result["code"] = 4;
+        result["message"] = "Cannot load encoder";
+        return charpizeJsonValue(result);
+    }
+
+    result["code"] = 0;
+    result["message"] = "Ok";
+    return charpizeJsonValue(result);
+}
+
+char * load(){
+    Json::Value ret;
+    try{
+        delete Instance.pAligner;
+        Instance.pAligner = new dlib::shape_predictor();
+        deserialize(Instance.alignerModelPath) >> *Instance.pAligner;
+    }catch(...){
+        result["code"] = 4;
+        result["message"] = "Cannot load aligner";
+        return charpizeJsonValue(result);
+    }
+    
+    try{
+        delete Instance.pEncoder;
+        Instance.pEncoder = new anet_type();
+        deserialize(Instance.encoderModelPath) >> *Instance.pEncoder;        
+    }catch(...){
+        result["code"] = 4;
+        result["message"] = "Cannot load encoder";
+        return charpizeJsonValue(result);
+    }
+
+    result["code"] = 0;
+    result["message"] = "Ok";
+    return charpizeJsonValue(result);
+}
+
+char *
+alignAndEncode(char * data, int x, int y){
     matrix<rgb_pixel> img(y, x);
     _convert_img_from_ctypes_(img, data, x, y);
-
-    Json::Value root;
+    Json::Value result;
 
     // 获取landmarks
     Json::Value landmarks;
 
     rectangle face_window(x, y);
-    auto shape = (*pLandmarkPredictor)(img, face_window);
+    auto shape = (*Instance.pAligner)(img, face_window);
     
     // push landmark coordinate into vector
     for(int i = 0; i < shape.num_parts(); i++){
@@ -63,7 +175,7 @@ LandmarkAndEncode(char * data, int x, int y){
         point[(int)1] = (int)shape.part(i).y();
         landmarks.append(point);
     }
-    root["landmarks"] = landmarks;
+    result["landmarks"] = landmarks;
 
     // 获取人脸vector
     Json::Value facevector;
@@ -80,20 +192,8 @@ LandmarkAndEncode(char * data, int x, int y){
     for(float vi : facecodes[0]){
         facevector[cvi++] = vi;
     }
-    root["facevector"] = facevector;
+    result["facevector"] = facevector;
     
-    std::string result = root.toStyledString();
-    cout << result;
-
-    return const_cast<char*>(result.c_str());
-}
-
-char *
-TestFunc(char * data, int x, int y){
-    matrix<rgb_pixel> img(y, x);
-    _convert_img_from_ctypes_(img, data, x, y);
-
-
-    string a("dadasdsadas");
-    return a.c_str();
+    std::string result = result.toStyledString();
+    return charpizeJsonValue(result);
 }

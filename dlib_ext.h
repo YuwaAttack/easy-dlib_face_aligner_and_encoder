@@ -43,17 +43,13 @@ using anet_type = loss_metric<fc_no_bias<128,avg_pool_everything<
 extern "C" {
 #endif
 
-int 
-LoadLandmarkPredictor(const char * modelpath);
+char * setParameters(char*);
 
-int 
-LoadFaceEncoder(const char * modelpath);
+char * alignAndEncode(char*, int, int);
 
-char *
-LandmarkAndEncode(char * data, int x, int y);
+char * load();
 
-char *
-TestFunc(char * data, int x, int y);
+char * reload();
 
 #ifdef __cplusplus
 }
