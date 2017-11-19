@@ -12,6 +12,11 @@
 using namespace std;
 using namespace dlib;
 
+
+char * Buffer[10000] = {
+    '\0'
+};
+
 // 自定义转换函数
 void
 _convert_img_from_ctypes_(matrix<rgb_pixel> &dst, char * data, int x, int y){
@@ -23,8 +28,6 @@ _convert_img_from_ctypes_(matrix<rgb_pixel> &dst, char * data, int x, int y){
     }
     return;
 }
-
-
 
 class DlibAlignerEncoder{
     public:
@@ -45,11 +48,11 @@ char * charpizeJsonValue(Json::Value& V){
 }
 
 char * setParameters(char* jsonstrParams){
-    Json::Value ret;
+    Json::Value result;
     Json::Reader reader;
     Json::Value parameters;
     
-    if (!reader.parse(jsonParameters, parameters, false))
+    if (!reader.parse(jsonstrParams, parameters, false))
     {
         result["code"] = 4;
         result["message"] = "Cannot parse json!";
@@ -82,7 +85,7 @@ char * setParameters(char* jsonstrParams){
 }
 
 char * load(){
-    Json::Value ret;
+    Json::Value result;
     try{
         Instance.pAligner = new dlib::shape_predictor();
     }catch(...){
@@ -104,7 +107,7 @@ char * load(){
     return charpizeJsonValue(result);
 }
 
-char * load(){
+char * reload(){
     Json::Value ret;
     try{
         Instance.pAligner = new dlib::shape_predictor();
@@ -171,8 +174,8 @@ alignAndEncode(char * data, int x, int y){
     // push landmark coordinate into vector
     for(int i = 0; i < shape.num_parts(); i++){
         Json::Value point;
-        point[(int)0] = (int)shape.part(i).x();
-        point[(int)1] = (int)shape.part(i).y();
+        point["x"] = (int)shape.part(i).x();
+        point["y"] = (int)shape.part(i).y();
         landmarks.append(point);
     }
     result["landmarks"] = landmarks;
