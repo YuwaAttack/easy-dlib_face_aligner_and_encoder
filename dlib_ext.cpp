@@ -1,10 +1,10 @@
 #include "dlib_ext.h"
 #include <iostream>
 #include <cmath>
-#include "../dlib/dlib/dnn.h"
-#include "../dlib/dlib/data_io.h"
-#include "../dlib/dlib/gui_widgets.h"
-#include "../dlib/dlib/image_processing.h"
+#include "dlib/dlib/dnn.h"
+#include "dlib/dlib/data_io.h"
+#include "dlib/dlib/gui_widgets.h"
+#include "dlib/dlib/image_processing.h"
 
 #include "json/json.h"
 #include <string.h>
